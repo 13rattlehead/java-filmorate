@@ -68,7 +68,7 @@ public class FilmController {
             throw new ConditionsNotMetException("У фильма должно быть название");
         }
 
-        if (film.getDescription() != null || film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
+        if (film.getDescription() != null && film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
             log.warn("У фильма должно быть описание не более 200 символов");
             throw new ConditionsNotMetException("У фильма должно быть описание не более 200 символов");
         }
