@@ -29,7 +29,7 @@ class FilmControllerTest {
 
         Film film = new Film();
         film.setName("Interstellar");
-        film.setDescription("Great movie");
+        film.setDescription("Очень крутой фильм");
         film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
 
