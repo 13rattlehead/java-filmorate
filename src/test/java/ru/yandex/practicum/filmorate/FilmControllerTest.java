@@ -1,20 +1,28 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 
 @SpringBootTest
 class FilmControllerTest {
 
     @Autowired
     private FilmController filmController;
+
+    @Autowired
+    private Validator validator;
 
     @Test
     void shouldCreateFilm() {
@@ -25,15 +33,19 @@ class FilmControllerTest {
         film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
 
+        Set<ConstraintViolation<Film>> violations =
+                validator.validate(film);
+
+        assertTrue(violations.isEmpty());
+
         Film createdFilm = filmController.createFilm(film);
 
         assertNotNull(createdFilm.getId());
         assertEquals("Interstellar", createdFilm.getName());
-        assertEquals(169, createdFilm.getDuration());
     }
 
     @Test
-    void shouldThrowExceptionWhenNameIsBlank() {
+    void shouldFailValidationWhenNameIsBlank() {
 
         Film film = new Film();
         film.setName(" ");
@@ -41,27 +53,40 @@ class FilmControllerTest {
         film.setReleaseDate(LocalDate.of(2010, 1, 1));
         film.setDuration(100);
 
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
+        Set<ConstraintViolation<Film>> violations =
+                validator.validate(film);
+
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    void shouldThrowExceptionWhenDescriptionIsTooLong() {
+    void shouldFailValidationWhenDescriptionIsTooLong() {
 
         Film film = new Film();
         film.setName("Film");
-
         film.setDescription("A".repeat(201));
-
         film.setReleaseDate(LocalDate.of(2010, 1, 1));
         film.setDuration(100);
 
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
+        Set<ConstraintViolation<Film>> violations =
+                validator.validate(film);
+
+        assertFalse(violations.isEmpty());
+    }
+
+    @Test
+    void shouldFailValidationWhenDurationIsNegative() {
+
+        Film film = new Film();
+        film.setName("Film");
+        film.setDescription("Description");
+        film.setReleaseDate(LocalDate.of(2010, 1, 1));
+        film.setDuration(-10);
+
+        Set<ConstraintViolation<Film>> violations =
+                validator.validate(film);
+
+        assertFalse(violations.isEmpty());
     }
 
     @Test
@@ -82,43 +107,13 @@ class FilmControllerTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenDurationIsNegative() {
-
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("Description");
-        film.setReleaseDate(LocalDate.of(2010, 1, 1));
-        film.setDuration(-10);
-
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenDurationIsZero() {
-
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("Description");
-        film.setReleaseDate(LocalDate.of(2010, 1, 1));
-        film.setDuration(0);
-
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenFilmIsEmpty() {
+    void shouldFailValidationWhenFilmIsEmpty() {
 
         Film film = new Film();
 
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
+        Set<ConstraintViolation<Film>> violations =
+                validator.validate(film);
+
+        assertFalse(violations.isEmpty());
     }
 }

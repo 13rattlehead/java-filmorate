@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/users")
@@ -23,9 +25,13 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
+    public User createUser(@Valid @RequestBody User user) {
 
-        validateUser(user);
+        validateLogin(user);
+
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
 
         user.setId(getNextId());
         users.put(user.getId(), user);
@@ -43,12 +49,26 @@ public class UserController {
             throw new ConditionsNotMetException("Пользователь не найден");
         }
 
-        validateUser(user);
+        validateLogin(user);
+
+        if (user.getName() == null || user.getName().isBlank()) {
+            log.info("Имя пользователя пустое. Используется login: {}", user.getLogin());
+
+            user.setName(user.getLogin());
+        }
+
         users.put(user.getId(), user);
 
         log.info("Пользователь обновлен: {}", user);
 
         return user;
+    }
+
+    public void validateLogin(User user) {
+        if (user.getLogin().contains(" ")) {
+            log.warn("Логин не может содержать пробелы: {}", user.getLogin());
+            throw new ConditionsNotMetException("Логин не может содержать пробелы");
+        }
     }
 
     private long getNextId() {
@@ -59,26 +79,4 @@ public class UserController {
                 .orElse(0) + 1;
     }
 
-    public void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() ||
-                !user.getEmail().contains("@")) {
-            log.warn("Ошибка валидации: некорректный email {} ", user.getEmail());
-            throw new ConditionsNotMetException("Email is invalid");
-        }
-
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            log.warn("Ошибка валидации: некорректный логин {} ", user.getLogin());
-            throw new ConditionsNotMetException("Login is invalid");
-        }
-
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.warn("Имя не указано, будет использоваться логин {} ", user.getLogin());
-            user.setName(user.getLogin());
-        }
-
-        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Ошибка валидации: некорректная дата рождения {} ", user.getBirthday());
-            throw new ConditionsNotMetException("Birthday is invalid");
-        }
-    }
 }

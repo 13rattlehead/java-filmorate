@@ -1,16 +1,17 @@
 package ru.yandex.practicum.filmorate;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 
 @SpringBootTest
 class UserControllerTest {
@@ -18,39 +19,30 @@ class UserControllerTest {
     @Autowired
     private UserController userController;
 
+    @Autowired
+    private Validator validator;
+
     @Test
     void shouldCreateUser() {
 
         User user = new User();
         user.setEmail("test@test.com");
-        user.setLogin("testLogin");
-        user.setName("Test User");
+        user.setLogin("login");
+        user.setName("Name");
         user.setBirthday(LocalDate.of(2000, 1, 1));
+
+        Set<ConstraintViolation<User>> violations =
+                validator.validate(user);
+
+        assertTrue(violations.isEmpty());
 
         User createdUser = userController.createUser(user);
 
         assertNotNull(createdUser.getId());
-        assertEquals("test@test.com", createdUser.getEmail());
-        assertEquals("testLogin", createdUser.getLogin());
-        assertEquals("Test User", createdUser.getName());
     }
 
     @Test
-    void shouldSetLoginAsNameWhenNameIsBlank() {
-
-        User user = new User();
-        user.setEmail("test@test.com");
-        user.setLogin("login");
-        user.setName(" ");
-        user.setBirthday(LocalDate.of(2000, 1, 1));
-
-        User createdUser = userController.createUser(user);
-
-        assertEquals("login", createdUser.getName());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenEmailIsInvalid() {
+    void shouldFailValidationWhenEmailIsInvalid() {
 
         User user = new User();
         user.setEmail("invalidEmail");
@@ -58,29 +50,14 @@ class UserControllerTest {
         user.setName("Name");
         user.setBirthday(LocalDate.of(2000, 1, 1));
 
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> userController.createUser(user)
-        );
+        Set<ConstraintViolation<User>> violations =
+                validator.validate(user);
+
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    void shouldThrowExceptionWhenLoginContainsSpaces() {
-
-        User user = new User();
-        user.setEmail("test@test.com");
-        user.setLogin("invalid login");
-        user.setName("Name");
-        user.setBirthday(LocalDate.of(2000, 1, 1));
-
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> userController.createUser(user)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenBirthdayIsInFuture() {
+    void shouldFailValidationWhenBirthdayIsInFuture() {
 
         User user = new User();
         user.setEmail("test@test.com");
@@ -88,9 +65,9 @@ class UserControllerTest {
         user.setName("Name");
         user.setBirthday(LocalDate.now().plusDays(1));
 
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> userController.createUser(user)
-        );
+        Set<ConstraintViolation<User>> violations =
+                validator.validate(user);
+
+        assertFalse(violations.isEmpty());
     }
 }

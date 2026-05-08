@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+
 @RestController
 @RequestMapping("/films")
 @Slf4j
@@ -18,7 +19,6 @@ public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
     private static final LocalDate CINEMA_VALIDATION_DATE = LocalDate
             .of(1895, 12, 28);
-    private static final int MAX_DESCRIPTION_LENGTH = 200;
 
     @GetMapping
     public Collection<Film> getFilms() {
@@ -63,25 +63,11 @@ public class FilmController {
     }
 
     public void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("У фильма должно быть название");
-            throw new ConditionsNotMetException("У фильма должно быть название");
-        }
-
-        if (film.getDescription() != null && film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
-            log.warn("У фильма должно быть описание не более 200 символов");
-            throw new ConditionsNotMetException("У фильма должно быть описание не более 200 символов");
-        }
-
         if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_VALIDATION_DATE)) {
             log.warn("У фильма должна быть дата релиза не раньше 28 декабря 1895 года");
             throw new ConditionsNotMetException("У фильма должна быть дата релиза " +
                     "не раньше 28 декабря 1895 года");
 
-        }
-        if (film.getDuration()== null || film.getDuration() <= 0) {
-            log.warn("У фильма должна быть положительная продолжительность");
-            throw new ConditionsNotMetException("У фильма должна быть положительная продолжительность");
         }
     }
 }
