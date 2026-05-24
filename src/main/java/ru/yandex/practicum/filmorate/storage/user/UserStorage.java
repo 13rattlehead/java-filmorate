@@ -7,9 +7,13 @@ import java.util.Optional;
 
 
 public interface UserStorage {
+
     User createUser(User user);
+
     User updateUser(User user);
+
     Collection<User> getUsers();
+
     Optional<User> findById(Long id);
 
 }
