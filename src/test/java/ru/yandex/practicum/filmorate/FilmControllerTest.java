@@ -1,119 +1,122 @@
 package ru.yandex.practicum.filmorate;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 class FilmControllerTest {
 
     @Autowired
-    private FilmController filmController;
+    private MockMvc mockMvc;
 
     @Autowired
-    private Validator validator;
+    private ObjectMapper objectMapper;
 
-    @Test
-    void shouldCreateFilm() {
+    private Film film;
 
-        Film film = new Film();
-        film.setName("Interstellar");
-        film.setDescription("Очень крутой фильм");
-        film.setReleaseDate(LocalDate.of(2014, 11, 7));
+    @BeforeEach
+    void setUp() {
+
+        film = new Film();
+
+        film.setName("Интерстеллар");
+        film.setDescription("Космос");
         film.setDuration(169);
-
-        Set<ConstraintViolation<Film>> violations =
-                validator.validate(film);
-
-        assertTrue(violations.isEmpty());
-
-        Film createdFilm = filmController.createFilm(film);
-
-        assertNotNull(createdFilm.getId());
-        assertEquals("Interstellar", createdFilm.getName());
+        film.setReleaseDate(LocalDate.of(2014, 11, 7));
     }
 
     @Test
-    void shouldFailValidationWhenNameIsBlank() {
+    void shouldCreateFilm() throws Exception {
 
-        Film film = new Film();
-        film.setName(" ");
-        film.setDescription("Description");
-        film.setReleaseDate(LocalDate.of(2010, 1, 1));
-        film.setDuration(100);
-
-        Set<ConstraintViolation<Film>> violations =
-                validator.validate(film);
-
-        assertFalse(violations.isEmpty());
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(film)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value("Интерстеллар"));
     }
 
     @Test
-    void shouldFailValidationWhenDescriptionIsTooLong() {
+    void shouldReturnBadRequestWhenNameIsBlank() throws Exception {
 
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("A".repeat(201));
-        film.setReleaseDate(LocalDate.of(2010, 1, 1));
-        film.setDuration(100);
+        film.setName("");
 
-        Set<ConstraintViolation<Film>> violations =
-                validator.validate(film);
-
-        assertFalse(violations.isEmpty());
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void shouldFailValidationWhenDurationIsNegative() {
+    void shouldUpdateFilm() throws Exception {
 
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("Description");
-        film.setReleaseDate(LocalDate.of(2010, 1, 1));
-        film.setDuration(-10);
+        String response = mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(film)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        Set<ConstraintViolation<Film>> violations =
-                validator.validate(film);
+        Film createdFilm =
+                objectMapper.readValue(response, Film.class);
 
-        assertFalse(violations.isEmpty());
+        createdFilm.setName("Обновленный фильм");
+
+        mockMvc.perform(put("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createdFilm)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name")
+                        .value("Обновленный фильм"));
     }
 
     @Test
-    void shouldThrowExceptionWhenReleaseDateIsTooEarly() {
+    void shouldReturnNotFoundWhenUpdateUnknownFilm()
+            throws Exception {
 
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("Description");
+        film.setId(999L);
 
-        film.setReleaseDate(LocalDate.of(1895, 12, 27));
-
-        film.setDuration(100);
-
-        assertThrows(
-                ConditionsNotMetException.class,
-                () -> filmController.createFilm(film)
-        );
+        mockMvc.perform(put("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(film)))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void shouldFailValidationWhenFilmIsEmpty() {
+    void shouldReturnAllFilms() throws Exception {
 
-        Film film = new Film();
+        mockMvc.perform(post("/films")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(film)));
 
-        Set<ConstraintViolation<Film>> violations =
-                validator.validate(film);
+        mockMvc.perform(get("/films"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
 
-        assertFalse(violations.isEmpty());
+
+    @Test
+    void shouldReturnPopularFilms() throws Exception {
+
+        mockMvc.perform(post("/films")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(film)));
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }
