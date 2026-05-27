@@ -21,32 +21,48 @@ public class FilmController {
 
     @GetMapping
     public Collection<Film> getFilms() {
-        return filmStorage.getFilms();
+        log.debug("Запрос на получение всех фильмов");
+        Collection<Film> films = filmStorage.getFilms();
+        log.info("Получено {} фильмов", films.size());
+        return films;
     }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        return filmStorage.createFilm(film);
+        log.debug("Запрос на создание фильма: {}", film);
+        Film createdFilm = filmStorage.createFilm(film);
+        log.info("Фильм создан: {}", createdFilm);
+        return createdFilm;
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
-        return filmStorage.updateFilm(film);
+        log.debug("Запрос на обновление фильма: {}", film);
+        Film updatedFilm = filmStorage.updateFilm(film);
+        log.info("Фильм обновлен: {}", updatedFilm);
+        return updatedFilm;
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("Запрос на добавление лайка фильму {} от пользователя {}", id, userId);
         filmService.addLike(id, userId);
+        log.info("Лайк добавлен фильму {} от пользователя {}", id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("Запрос на удаление лайка фильму {} от пользователя {}", id, userId);
         filmService.removeLike(id, userId);
+        log.info("Лайк удален фильму {} от пользователя {}", id, userId);
     }
 
     @GetMapping("/popular")
     public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getPopularFilms(count);
+        log.debug("Запрос на получение {} популярных фильмов", count);
+        Collection<Film> popularFilms = filmService.getPopularFilms(count);
+        log.info("Получены {} популярных фильмов", popularFilms.size());
+        return popularFilms;
     }
 
 }
