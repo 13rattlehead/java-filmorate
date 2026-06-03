@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.FrienshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -23,9 +24,9 @@ public class UserService {
         validateUser(userId, friendId);
         User user = userStorage.findById(userId).get();
         User friend = userStorage.findById(friendId).get();
-        user.getFriends().add(friendId);
+        user.getFriends().put(friendId, FrienshipStatus.CONFIRMED);
         log.info("Пользователь c ID " + userId + " добавлен в друзья пользователя c ID " + friendId);
-        friend.getFriends().add(userId);
+        friend.getFriends().put(userId, FrienshipStatus.CONFIRMED);
         log.info("Пользователь c ID " + friendId + " добавлен в друзья пользователя c ID " + userId);
 
     }
@@ -46,7 +47,7 @@ public class UserService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
         User user = userStorage.findById(userId).get();
-        return user.getFriends().stream()
+        return user.getFriends().keySet().stream()
                 .map(id -> userStorage.findById(id).get())
                 .collect(Collectors.toList());
     }
@@ -55,8 +56,8 @@ public class UserService {
         validateUser(userId, friendId);
         User user = userStorage.findById(userId).get();
         User friend = userStorage.findById(friendId).get();
-        return user.getFriends().stream()
-                .filter(friend.getFriends()::contains)
+        return user.getFriends().keySet().stream()
+                .filter(friend.getFriends().keySet()::contains)
                 .map(id -> userStorage.findById(id).get())
                 .collect(Collectors.toList());
     }
