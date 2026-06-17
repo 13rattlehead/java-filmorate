@@ -49,7 +49,7 @@ public class UserController {
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.debug("Получен запрос на обновление пользователя");
-        User updatedUser =  userStorage.updateUser(user);
+        User updatedUser =  userService.updateUser(user);
         log.info("Пользователь с id = {} был обновлен", updatedUser.getId());
         return updatedUser;
     }

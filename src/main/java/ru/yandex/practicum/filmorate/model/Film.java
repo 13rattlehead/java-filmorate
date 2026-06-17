@@ -1,9 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -17,6 +14,18 @@ import java.util.Set;
 @Data
 public class Film {
 
+    private static final LocalDate CINEMA_BIRTHDAY =
+            LocalDate.of(1895, 12, 28);
+
+    @NotNull
+    private LocalDate releaseDate;
+
+    @AssertTrue(message = "Дата релиза не может быть раньше 28.12.1895")
+    public boolean isReleaseDateValid() {
+        return releaseDate == null ||
+                !releaseDate.isBefore(CINEMA_BIRTHDAY);
+    }
+
     private static final Integer MAX_DESCRIPTION_LENGTH = 200;
 
     private Long id;
@@ -27,15 +36,14 @@ public class Film {
     @Size(max = 200, message = "Описание фильма не может быть длиннее 200 символов")
     private String description;
 
-    private LocalDate releaseDate;
 
     @NotNull(message = "Продолжительность фильма не может быть пустой")
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
 
-    private Collection<Genre> genre;
+    private Mpa mpa;
 
-    private Enum<Mpa> mpa;
+    private Set<Genre> genres = new HashSet<>();
 
     private Set<Long> likes = new HashSet<>();
 
