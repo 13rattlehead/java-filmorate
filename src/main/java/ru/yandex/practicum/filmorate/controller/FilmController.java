@@ -1,74 +1,68 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 
 @RestController
 @RequestMapping("/films")
 @Slf4j
+@RequiredArgsConstructor
 public class FilmController {
-
-    private final Map<Long, Film> films = new HashMap<>();
-    private static final LocalDate CINEMA_VALIDATION_DATE = LocalDate
-            .of(1895, 12, 28);
+    private final FilmService filmService;
+    private final FilmStorage filmStorage;
 
     @GetMapping
     public Collection<Film> getFilms() {
-        return films.values();
+        log.debug("Запрос на получение всех фильмов");
+        Collection<Film> films = filmStorage.getFilms();
+        log.info("Получено {} фильмов", films.size());
+        return films;
     }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-
-        validateFilm(film);
-
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-
-        log.info("Фильм создан: {}", film);
-
-        return film;
+        log.debug("Запрос на создание фильма: {}", film);
+        Film createdFilm = filmStorage.createFilm(film);
+        log.info("Фильм создан: {}", createdFilm);
+        return createdFilm;
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
-
-        if (film.getId() == null || !films.containsKey(film.getId())) {
-            log.warn("Фильм с id: {} не найден", film.getId());
-            throw new ConditionsNotMetException("Фильм не найден");
-        }
-        validateFilm(film);
-        films.put(film.getId(), film);
-
-        log.info("Фильм обновлен: {}", film);
-
-        return film;
+    public Film updateFilm(@Valid @RequestBody Film film) {
+        log.debug("Запрос на обновление фильма: {}", film);
+        Film updatedFilm = filmStorage.updateFilm(film);
+        log.info("Фильм обновлен: {}", updatedFilm);
+        return updatedFilm;
     }
 
-    public long getNextId() {
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return currentMaxId + 1;
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("Запрос на добавление лайка фильму {} от пользователя {}", id, userId);
+        filmService.addLike(id, userId);
+        log.info("Лайк добавлен фильму {} от пользователя {}", id, userId);
     }
 
-    public void validateFilm(Film film) {
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_VALIDATION_DATE)) {
-            log.warn("У фильма должна быть дата релиза не раньше 28 декабря 1895 года");
-            throw new ConditionsNotMetException("У фильма должна быть дата релиза " +
-                    "не раньше 28 декабря 1895 года");
-
-        }
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("Запрос на удаление лайка фильму {} от пользователя {}", id, userId);
+        filmService.removeLike(id, userId);
+        log.info("Лайк удален фильму {} от пользователя {}", id, userId);
     }
+
+    @GetMapping("/popular")
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        log.debug("Запрос на получение {} популярных фильмов", count);
+        Collection<Film> popularFilms = filmService.getPopularFilms(count);
+        log.info("Получены {} популярных фильмов", popularFilms.size());
+        return popularFilms;
+    }
+
 }
