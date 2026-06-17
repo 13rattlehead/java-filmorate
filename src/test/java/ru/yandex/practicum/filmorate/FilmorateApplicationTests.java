@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 		GenreDbStorage.class,
 		MpaDbStorage.class
 })
-class FilmoRateApplicationTests {
+class FilmorateApplicationTests {
 
 	@Autowired
 	private UserDbStorage userStorage;
