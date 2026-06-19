@@ -4,10 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 
@@ -19,12 +17,11 @@ import java.util.Collection;
 public class UserController {
 
     private final UserService userService;
-    private final UserStorage userStorage;
 
     @GetMapping
     public Collection<User> getUsers() {
         log.debug("Запрос на получение всех пользователей");
-        Collection<User> allUsers = userStorage.getUsers();
+        Collection<User> allUsers = userService.getUsers();
         log.info("Получено {} пользователей", allUsers.size());
         return allUsers;
     }
@@ -32,8 +29,7 @@ public class UserController {
     @GetMapping("/{id}")
     public User findById(@PathVariable Long id) {
         log.debug("Запрос на получение пользователя с id={}", id);
-        User user = userStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = userService.getUser(id);
         log.info("Получен пользователь с id = {}", user.getId());
         return user;
     }
@@ -41,7 +37,7 @@ public class UserController {
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
         log.debug("Получен запрос на создание пользователя");
-        User newUser = userStorage.createUser(user);
+        User newUser = userService.createUser(user);
         log.info("Создан новый пользователь с id = {}", newUser.getId());
         return newUser;
     }
@@ -49,7 +45,7 @@ public class UserController {
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.debug("Получен запрос на обновление пользователя");
-        User updatedUser =  userStorage.updateUser(user);
+        User updatedUser =  userService.updateUser(user);
         log.info("Пользователь с id = {} был обновлен", updatedUser.getId());
         return updatedUser;
     }
