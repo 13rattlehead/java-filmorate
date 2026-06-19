@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -10,6 +11,7 @@ import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,6 +23,9 @@ public class FilmService {
     private final UserStorage userStorage;
     private final MpaStorage mpaStorage;
     private final GenreStorage genreStorage;
+
+    private static final LocalDate CINEMA_BIRTHDAY =
+            LocalDate.of(1895, 12, 28);
 
     public FilmService(
             @Qualifier("filmDbStorage") FilmStorage filmStorage,
@@ -47,6 +52,9 @@ public class FilmService {
     }
 
     public Film createFilm(Film film) {
+        if (film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
+            throw new ConditionsNotMetException("Фильм не может быть раньше даты: 28.12.1895");
+        }
         validateMpa(film);
         validateGenres(film);
 

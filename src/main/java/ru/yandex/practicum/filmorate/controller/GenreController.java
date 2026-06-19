@@ -5,28 +5,34 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Collection;
+
+import ru.yandex.practicum.filmorate.dto.GenreDto;
+import ru.yandex.practicum.filmorate.service.GenreService;
+
 
 @RestController
 @RequestMapping("/genres")
 @RequiredArgsConstructor
 public class GenreController {
 
-    private final GenreDbStorage genreStorage;
+    private final GenreService genreService;
 
     @GetMapping
-    public Collection<Genre> getGenres() {
-        return genreStorage.findAll();
+    public ResponseEntity<Collection<GenreDto>> getGenres() {
+        return ResponseEntity.ok(
+                genreService.findAll()
+        );
     }
 
     @GetMapping("/{id}")
-    public Genre getGenre(@PathVariable Integer id) {
-        return genreStorage.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Жанр не найден"));
+    public ResponseEntity<GenreDto> getGenre(
+            @PathVariable Integer id) {
+
+        return ResponseEntity.ok(
+                genreService.findById(id)
+        );
     }
 }

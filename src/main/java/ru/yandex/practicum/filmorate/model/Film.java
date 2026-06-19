@@ -11,17 +11,8 @@ import java.util.Set;
 @Data
 public class Film {
 
-    private static final LocalDate CINEMA_BIRTHDAY =
-            LocalDate.of(1895, 12, 28);
-
     @NotNull
     private LocalDate releaseDate;
-
-    @AssertTrue(message = "Дата релиза не может быть раньше 28.12.1895")
-    public boolean isReleaseDateValid() {
-        return releaseDate == null ||
-                !releaseDate.isBefore(CINEMA_BIRTHDAY);
-    }
 
     private static final Integer MAX_DESCRIPTION_LENGTH = 200;
 

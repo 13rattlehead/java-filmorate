@@ -22,6 +22,15 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public User createUser(User user) {
+        log.debug("Создание пользователя {}", user.getEmail());
+
+        User createdUser = userStorage.createUser(user);
+
+        log.info("Пользователь с id = {} успешно создан", createdUser.getId());
+        return createdUser;
+    }
+
     public User updateUser(User user) {
 
         userStorage.findById(user.getId())
